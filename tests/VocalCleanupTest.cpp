@@ -27,6 +27,29 @@ int main()
         }
     }
 
+    cleanup.reset();
+    cleanup.process(0.5f, {});
+    for (int sample = 1; sample <= latency; ++sample)
+    {
+        const float expected = sample == latency ? 0.5f : 0.0f;
+        if (cleanup.process(0, {}, true) != expected)
+        {
+            std::cerr << "Bypass did not preserve the delayed dry signal\n";
+            return 1;
+        }
+    }
+
+    cleanup.process(0.5f, {});
+    cleanup.reset();
+    for (int sample = 0; sample <= latency; ++sample)
+    {
+        if (cleanup.process(0, {}) != 0)
+        {
+            std::cerr << "Reset left audio in the delay or denoiser\n";
+            return 1;
+        }
+    }
+
     cleanup.prepare(48000);
     std::uint32_t generator = 1;
     double inputEnergy = 0;

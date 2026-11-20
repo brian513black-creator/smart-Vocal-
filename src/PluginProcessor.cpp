@@ -46,17 +46,20 @@ public:
 
     void processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&) override
     {
-        juce::ScopedNoDenormals noDenormals;
-        const blackie::Settings settings { noise->load(), room->load(), tone->load() };
-        for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
-        {
-            auto* samples = buffer.getWritePointer(channel);
-            for (int index = 0; index < buffer.getNumSamples(); ++index)
-                samples[index] = channels[static_cast<size_t>(channel)].process(samples[index], settings);
-        }
+        processAudio(buffer, false);
+    }
 
-        referenceEq.process(buffer.getArrayOfWritePointers(), buffer.getNumChannels(),
-                            buffer.getNumSamples(), matchBrian->load());
+    void processBlockBypassed(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&) override
+    {
+        processAudio(buffer, true);
+    }
+
+    void reset() override
+    {
+        for (auto& channel : channels)
+            channel.reset();
+
+        referenceEq.reset();
     }
 
     bool hasEditor() const override { return true; }
@@ -84,6 +87,22 @@ public:
     }
 
 private:
+    void processAudio(juce::AudioBuffer<float>& buffer, bool bypassed)
+    {
+        juce::ScopedNoDenormals noDenormals;
+        const blackie::Settings settings { noise->load(), room->load(), tone->load() };
+        for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+        {
+            auto* samples = buffer.getWritePointer(channel);
+            for (int index = 0; index < buffer.getNumSamples(); ++index)
+                samples[index] = channels[static_cast<size_t>(channel)].process(samples[index], settings, bypassed);
+        }
+
+        if (!bypassed)
+            referenceEq.process(buffer.getArrayOfWritePointers(), buffer.getNumChannels(),
+                                buffer.getNumSamples(), matchBrian->load());
+    }
+
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameters()
     {
         juce::AudioProcessorValueTreeState::ParameterLayout layout;

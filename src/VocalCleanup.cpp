@@ -19,18 +19,11 @@ void VocalCleanup::prepare(double sampleRate)
             std::call_once(warmup, [this]
             {
                 rnnoise_process_frame(model.get(), cleanFrame.data(), inputFrame.data());
-                rnnoise_init(model.get());
             });
         }
     }
 
-    inputFrame.fill(0);
-    cleanFrame.fill(0);
-    dryDelay.fill(0);
-    position = 0;
-    low = body = presence = level = peak = 0;
-    roomGain = 1;
-    current = Settings {};
+    reset();
     const auto pole = [sampleRate](double hertz)
     {
         return static_cast<float>(1.0 - std::exp(-6.28318530718 * hertz / sampleRate));
@@ -45,17 +38,32 @@ void VocalCleanup::prepare(double sampleRate)
     controlRate = pole(25);
 }
 
-float VocalCleanup::process(float input, Settings settings) noexcept
+void VocalCleanup::reset() noexcept
+{
+    if (model)
+        rnnoise_init(model.get());
+
+    inputFrame.fill(0);
+    cleanFrame.fill(0);
+    dryDelay.fill(0);
+    position = 0;
+    low = body = presence = level = peak = 0;
+    roomGain = 1;
+    current = Settings {};
+}
+
+float VocalCleanup::process(float input, Settings settings, bool bypassed) noexcept
 {
     current.noise += controlRate * (settings.noise - current.noise);
     current.room += controlRate * (settings.room - current.room);
     current.tone += controlRate * (settings.tone - current.tone);
 
     float sample = input;
+    float dry = input;
     if (model)
     {
         const int framePosition = position % frameSize;
-        const float dry = dryDelay[position];
+        dry = dryDelay[position];
         dryDelay[position] = input;
         sample = dry + current.noise * (cleanFrame[framePosition] / 32768.0f - dry);
         inputFrame[framePosition] = input * 32768.0f;
@@ -78,6 +86,6 @@ float VocalCleanup::process(float input, Settings settings) noexcept
     body += bodyRate * (sample - body);
     presence += presenceRate * (sample - presence);
     const float contour = -0.9f * low - 0.18f * (body - low) + 0.12f * (sample - presence);
-    return (sample + current.tone * contour) * roomGain;
+    return bypassed ? dry : (sample + current.tone * contour) * roomGain;
 }
 }

@@ -9,7 +9,7 @@ jobs:
   build:
     runs-on: windows-2022
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Configure x64
         run: cmake -S . -B build -A x64 -T ClangCL -DBVB_BUILD_PLUGIN=ON
       - name: Build
@@ -32,7 +32,7 @@ jobs:
           $binary = "build/BlackieVocalBox_artefacts/Release/VST3/Blackie Vocal Box.vst3/Contents/x86_64-win/Blackie Vocal Box.vst3"
           if (!(Test-Path -LiteralPath $binary -PathType Leaf)) { throw "Missing VST3 binary: $binary" }
       - name: Upload VST3 bundle and model license
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: Blackie-Vocal-Box-Windows-x64
           path: |

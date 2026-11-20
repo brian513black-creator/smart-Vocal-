@@ -11,6 +11,7 @@ public:
     static constexpr float defaultAmount = 0.8f;
 
     void prepare(double sampleRate) noexcept;
+    void reset() noexcept;
     void process(float* const* channels, int numChannels, int numSamples, float amount) noexcept;
 
 private:
@@ -27,7 +28,6 @@ private:
         float z1 = 0, z2 = 0;
     };
 
-    void reset() noexcept;
     void finishWindow(int numChannels) noexcept;
 
     std::array<Coefficients, bandCount> coefficients {};
