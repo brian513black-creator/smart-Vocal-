@@ -1,0 +1,31 @@
+name: Windows VST3
+
+on: [push, pull_request, workflow_dispatch]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure x64
+        run: cmake -S . -B build -A x64 -DBVB_BUILD_PLUGIN=ON
+      - name: Build
+        run: cmake --build build --config Release --parallel 2
+      - name: Test
+        run: ctest --test-dir build -C Release --output-on-failure
+      - name: Verify VST3 bundle
+        shell: pwsh
+        run: |
+          $binary = "build/BlackieVocalBox_artefacts/Release/VST3/Blackie Vocal Box.vst3/Contents/x86_64-win/Blackie Vocal Box.vst3"
+          if (!(Test-Path -LiteralPath $binary -PathType Leaf)) { throw "Missing VST3 binary: $binary" }
+      - name: Upload VST3 bundle and model license
+        uses: actions/upload-artifact@v4
+        with:
+          name: Blackie-Vocal-Box-Windows-x64
+          path: |
+            build/BlackieVocalBox_artefacts/Release/VST3/Blackie Vocal Box.vst3
+            build/_deps/rnnoise-src/COPYING
+          if-no-files-found: error
