@@ -1,8 +1,11 @@
+#include "ReferenceEq.h"
 #include "VocalCleanup.h"
 #include <juce_audio_processors/juce_audio_processors.h>
 
 namespace
 {
+constexpr auto matchBrianId = "matchBrian";
+
 class VocalBoxProcessor final : public juce::AudioProcessor
 {
 public:
@@ -37,6 +40,7 @@ public:
         for (auto& channel : channels)
             channel.prepare(sampleRate);
 
+        referenceEq.prepare(sampleRate);
         setLatencySamples(channels.front().latency());
     }
 
@@ -50,6 +54,9 @@ public:
             for (int index = 0; index < buffer.getNumSamples(); ++index)
                 samples[index] = channels[static_cast<size_t>(channel)].process(samples[index], settings);
         }
+
+        referenceEq.process(buffer.getArrayOfWritePointers(), buffer.getNumChannels(),
+                            buffer.getNumSamples(), matchBrian->load());
     }
 
     bool hasEditor() const override { return true; }
@@ -66,9 +73,14 @@ public:
 
     void setStateInformation(const void* data, int size) override
     {
-        if (const auto xml = getXmlFromBinary(data, size))
-            if (xml->hasTagName(parameters.state.getType()))
-                parameters.replaceState(juce::ValueTree::fromXml(*xml));
+        if (const auto xml = getXmlFromBinary(data, size); xml && xml->hasTagName(parameters.state.getType()))
+        {
+            const auto state = juce::ValueTree::fromXml(*xml);
+            const bool hasMatchAmount = state.getChildWithProperty("id", matchBrianId).isValid();
+            parameters.replaceState(state);
+            if (!hasMatchAmount)
+                parameters.getParameter(matchBrianId)->setValueNotifyingHost(0.0f);
+        }
     }
 
 private:
@@ -84,14 +96,17 @@ private:
         add("noise", "AI Noise (48 kHz)", defaults.noise);
         add("room", "Room Tail", defaults.room);
         add("tone", "Natural EQ", defaults.tone);
+        add(matchBrianId, "Auto EQ (Brian)", blackie::ReferenceEq::defaultAmount);
         return layout;
     }
 
     std::array<blackie::VocalCleanup, 2> channels;
+    blackie::ReferenceEq referenceEq;
     juce::AudioProcessorValueTreeState parameters;
     const std::atomic<float>* noise = parameters.getRawParameterValue("noise");
     const std::atomic<float>* room = parameters.getRawParameterValue("room");
     const std::atomic<float>* tone = parameters.getRawParameterValue("tone");
+    const std::atomic<float>* matchBrian = parameters.getRawParameterValue(matchBrianId);
 };
 }
 
