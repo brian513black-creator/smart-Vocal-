@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Configure x64
-        run: cmake -S . -B build -A x64 -DBVB_BUILD_PLUGIN=ON
+        run: cmake -S . -B build -A x64 -T ClangCL -DBVB_BUILD_PLUGIN=ON
       - name: Build
         shell: pwsh
         run: |

@@ -17,10 +17,10 @@ The model runs offline and needs no account, API key, or runtime model download.
 
 ## Build on Windows
 
-Install Visual Studio 2022 with **Desktop development with C++**, CMake 3.22 or newer, and Git. From the checkout in PowerShell:
+Install Visual Studio 2022 with **Desktop development with C++** and **C++ Clang tools for Windows**, CMake 3.22 or newer, and Git. From the checkout in PowerShell:
 
 ```powershell
-cmake -S . -B build -A x64 -DBVB_BUILD_PLUGIN=ON
+cmake -S . -B build -A x64 -T ClangCL -DBVB_BUILD_PLUGIN=ON
 cmake --build build --config Release --parallel 2
 ctest --test-dir build -C Release --output-on-failure
 ```
