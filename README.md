@@ -37,4 +37,4 @@ ctest --test-dir build --output-on-failure
 
 The checks cover dry-path latency, denoising on simulated fan noise, room-tail attenuation, Natural EQ, and Auto EQ. They use synthetic signals. Audition the plug-in on real vocals and check the Windows DAW before relying on it in production.
 
-The build fetches pinned JUCE 8.0.8 and RNNoise v0.1 source from GitHub. RNNoise includes its trained model in the pinned source. Its BSD notice is included with the CI artifact. JUCE offers AGPLv3 and commercial licensing options. Review JUCE's terms before distributing a build.
+The build fetches pinned JUCE 8.0.8 and RNNoise v0.1 source from GitHub. RNNoise includes its trained model in the pinned source. The VST3 bundle includes the full RNNoise BSD license in `Contents/Resources/RNNoise-LICENSE.txt`. JUCE offers AGPLv3 and commercial licensing options. Review JUCE's terms before distributing a build.

@@ -49,4 +49,12 @@ if(BVB_BUILD_PLUGIN)
     target_compile_definitions(BlackieVocalBox PRIVATE
         JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0)
     target_link_libraries(BlackieVocalBox PRIVATE bvb_dsp juce::juce_audio_processors)
+
+    get_target_property(vst3_bundle BlackieVocalBox_VST3 JUCE_PLUGIN_ARTEFACT_FILE)
+    add_custom_command(TARGET BlackieVocalBox_VST3 POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${vst3_bundle}/Contents/Resources"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${rnnoise_SOURCE_DIR}/COPYING"
+            "${vst3_bundle}/Contents/Resources/RNNoise-LICENSE.txt"
+        VERBATIM)
 endif()
