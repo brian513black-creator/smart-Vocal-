@@ -6,7 +6,7 @@
 
 namespace blackie
 {
-void VocalCleanup::prepare(double sampleRate)
+void VocalCleanup::prepare(double sampleRate, Settings settings)
 {
     model.reset();
     if (sampleRate == 48000.0)
@@ -24,6 +24,7 @@ void VocalCleanup::prepare(double sampleRate)
     }
 
     reset();
+    current = settings;
     const auto pole = [sampleRate](double hertz)
     {
         return static_cast<float>(1.0 - std::exp(-6.28318530718 * hertz / sampleRate));

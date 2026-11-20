@@ -1,4 +1,4 @@
-name: Windows VST3
+name: Windows VST3 and Desktop App
 
 on: [push, pull_request, workflow_dispatch]
 
@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Configure x64
-        run: cmake -S . -B build -A x64 -T ClangCL -DBVB_BUILD_PLUGIN=ON
+        run: cmake -S . -B build -A x64 -T ClangCL -DBVB_BUILD_PLUGIN=ON -DBVB_BUILD_APP=ON
       - name: Build
         shell: pwsh
         run: |
@@ -25,7 +25,7 @@ jobs:
             exit $buildExit
           }
       - name: Test
-        run: ctest --test-dir build -C Release --output-on-failure
+        run: ctest --test-dir build -C Release --output-on-failure --no-tests=error
       - name: Verify VST3 bundle and RNNoise license
         shell: pwsh
         run: |
@@ -42,4 +42,18 @@ jobs:
         with:
           name: Blackie-Vocal-Box-Windows-x64
           path: build/BlackieVocalBox_artefacts/Release/VST3/
+          if-no-files-found: error
+      - name: Verify desktop app and RNNoise license
+        shell: pwsh
+        run: |
+          $app = "build/BlackieVocalBoxApp_artefacts/Release"
+          if (!(Test-Path -LiteralPath "$app/Blackie Vocal Box.exe" -PathType Leaf)) { throw "Missing desktop executable." }
+          if ((Get-FileHash -LiteralPath "$app/RNNoise-LICENSE.txt").Hash -ne (Get-FileHash -LiteralPath "build/_deps/rnnoise-src/COPYING").Hash) {
+            throw "The desktop app's RNNoise license differs from upstream COPYING."
+          }
+      - name: Upload Windows desktop app
+        uses: actions/upload-artifact@v6
+        with:
+          name: Blackie-Vocal-Box-Desktop-Windows-x64
+          path: build/BlackieVocalBoxApp_artefacts/Release/
           if-no-files-found: error

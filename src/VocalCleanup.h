@@ -19,7 +19,7 @@ struct Settings
 class VocalCleanup
 {
 public:
-    void prepare(double sampleRate);
+    void prepare(double sampleRate, Settings settings = {});
     void reset() noexcept;
     int latency() const noexcept { return model ? 2 * frameSize : 0; }
     float process(float input, Settings settings, bool bypassed = false) noexcept;
